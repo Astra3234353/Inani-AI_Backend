@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASL Image Upload - Mock Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .image-preview {
+            margin: 20px 0;
+            display: none;
+            text-align: center;
+        }
+        
+        .image-preview.show {
+            display: block;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        
+        .file-size {
+            color: #558b2f;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .response.show {
+            display: block;
+        }
+        
+        .response.success {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+        
+        .response.error {
+            background: #ffebee;
+            border: 2px solid #f44336;
+        }
+        
+        .response-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .response.success .response-title {
+            color: #2e7d32;
+        }
+        
+        .response.error .response-title {
+            color: #c62828;
+        }
+        
+        .response-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .detected-letter {
+            font-size: 72px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            border: 3px solid #667eea;
+        }
+        
+        .confidence-meter {
+            margin: 20px 0;
+        }
+        
+        .confidence-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .confidence-label {
+            text-align: center;
+            margin-top: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 ASL Image Upload</h1>
+        <p class="subtitle">Mock Frontend para probar detección de letras ASL en imágenes</p>
+        
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="apiUrl">URL de tu API Django:</label>
+                <input 
+                    type="text" 
+                    id="apiUrl" 
+                    value="http://localhost:8000/api/upload-image/" 
+                    placeholder="http://localhost:8000/api/upload-image/"
+                >
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📸</div>
+                <p><strong>Haz clic aquí o arrastra una imagen</strong></p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Formatos: JPG, PNG, BMP, WebP
+                </p>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+            
+            <div class="image-preview" id="imagePreview">
+                <img id="previewImg" src="" alt="Vista previa">
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn" disabled>
+                Analizar Imagen
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analizando imagen...</p>
+        </div>
+        
+        <div class="response" id="response">
+            <div class="response-title" id="responseTitle"></div>
+            <div class="response-content" id="responseContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const loading = document.getElementById('loading');
+        const response = document.getElementById('response');
+        const responseTitle = document.getElementById('responseTitle');
+        const responseContent = document.getElementById('responseContent');
+        const apiUrl = document.getElementById('apiUrl');
+        
+        let selectedFile = null;
+        
+        // Click en el área de upload
+        uploadArea.addEventListener('click', () => {
+            imageInput.click();
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+        
+        // Selección de archivo
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona un archivo de imagen');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Mostrar vista previa
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.classList.add('show');
+            };
+            reader.readAsDataURL(file);
+            
+            // Mostrar información del archivo
+            fileName.textContent = `📁 ${file.name}`;
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileSize.textContent = `📊 Tamaño: ${sizeMB} MB`;
+            
+            fileInfo.classList.add('show');
+            submitBtn.disabled = false;
+            response.classList.remove('show');
+        }
+        
+        // Enviar formulario
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!selectedFile) {
+                alert('Por favor selecciona una imagen primero');
+                return;
+            }
+            
+            // Mostrar loading
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+            response.classList.remove('show');
+            
+            // Crear FormData
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+                
+                const res = await fetch(apiUrl.value, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                
+                // Ocultar loading
+                loading.classList.remove('show');
+                
+                // Mostrar respuesta
+                response.classList.add('show');
+                
+                if (res.ok && data.success) {
+                    response.classList.remove('error');
+                    response.classList.add('success');
+                    responseTitle.textContent = '✅ ' + data.message;
+                    
+                    const confidence = data.ai_results.confidence || 0;
+                    const confidencePercent = Math.round(confidence * 100);
+                    
+                    responseContent.innerHTML = `
+                        <strong>📁 Información de la imagen:</strong><br>
+                        Nombre: ${data.image_info.filename}<br>
+                        Tamaño: ${data.image_info.size_mb} MB<br>
+                        Formato: ${data.image_info.format}<br>
+                        Dimensiones: ${data.image_info.dimensions}<br><br>
+                        
+                        <strong>🤖 Resultado del Análisis:</strong>
+                        <div class="detected-letter">${data.ai_results.detected_letter}</div>
+                        
+                        <div class="confidence-meter">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${confidencePercent}%">
+                                    ${confidencePercent}%
+                                </div>
+                            </div>
+                            <div class="confidence-label">
+                                Nivel de confianza: ${data.ai_results.confidence_percentage}
+                            </div>
+                        </div>
+                        
+                        ${confidencePercent < 50 ? 
+                            '<p style="color: #ff9800; margin-top: 10px;"><strong>⚠️ Advertencia:</strong> La confianza es baja. Asegúrate de que la imagen tenga buena iluminación, fondo claro y la mano esté centrada.</p>' 
+                            : ''}
+                    `;
+                } else {
+                    response.classList.remove('success');
+                    response.classList.add('error');
+                    responseTitle.textContent = '❌ Error';
+                    
+                    let errorHTML = `<strong>Detalles del error:</strong><br>${data.error || 'Ocurrió un error desconocido'}`;
+                    
+                    if (data.image_info) {
+                        errorHTML += `<br><br><strong>Imagen recibida:</strong><br>
+                            📁 ${data.image_info.filename}<br>
+                            📊 ${data.image_info.size_mb} MB`;
+                    }
+                    
+                    responseContent.innerHTML = errorHTML;
+                }
+                
+                submitBtn.disabled = false;
+                
+            } catch (error) {
+                loading.classList.remove('show');
+                response.classList.add('show');
+                response.classList.remove('success');
+                response.classList.add('error');
+                responseTitle.textContent = '❌ Error de Conexión';
+                responseContent.innerHTML = `
+                    <strong>No se pudo conectar con el servidor:</strong><br>
+                    ${error.message}<br><br>
+                    <strong>Posibles causas:</strong><br>
+                    • El servidor Django no está corriendo<br>
+                    • La URL de la API es incorrecta<br>
+                    • Problemas de CORS
+                `;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
